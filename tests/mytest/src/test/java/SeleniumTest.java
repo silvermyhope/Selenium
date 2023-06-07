@@ -79,7 +79,7 @@ public class SeleniumTest {
         String email = "fake.email@gmail.com";
         String password = "try.password";
         Dashboard_Page dashboardPage = loginPage.logIn(email, password);
-        String dashboardBodyTextContains = properties.getProperty("dashboard.body.text2.contains");        
+        String dashboardBodyTextContains = properties.getProperty("access.account.body.text.contains");        
         assertTrue(dashboardPage.getBodyText().contains(dashboardBodyTextContains));
     }
 

@@ -1,6 +1,8 @@
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import javax.mail.*;
 import javax.mail.search.FlagTerm;
@@ -35,10 +37,14 @@ public class Registration_Page extends PageBase{
         this.waitAndReturnElement(emailLocator).sendKeys(email);
         this.waitAndReturnElement(passwordLocator).sendKeys(password);
         this.waitAndReturnElement(phonenumberLocator).sendKeys(phonenumber);
-        this.waitAndReturnElement(countryCodeLocator).sendKeys(countryCode);
+
+        // Select the country code option
+        WebElement countryCodeElement = this.waitAndReturnElement(countryCodeLocator);
+        Select countryCodeSelect = new Select(countryCodeElement);
+        countryCodeSelect.selectByValue(countryCode);
 
 
-        WebDriverWait wait = new WebDriverWait(driver, 60);
+        WebDriverWait wait = new WebDriverWait(driver, 5);
         wait.until(ExpectedConditions.visibilityOfElementLocated(verifyEmailButtonLocator)).click();
 
         // Handle email verification using OTP
