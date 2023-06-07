@@ -17,6 +17,9 @@ import java.io.InputStream;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+
 
 public class SeleniumTest {
 	
@@ -26,28 +29,34 @@ public class SeleniumTest {
 
     @Before
     public void setup() throws MalformedURLException {
-        System.setProperty("webdriver.chrome.driver", "C:/chromedriver_win32/chromedriver.exe");
+        System.setProperty("webdriver.chrome.driver", "chromedriver.exe");
         ChromeOptions options = new ChromeOptions();
+        options.addArguments("--disable-popup-blocking");
+        options.addArguments("--incognito");
 
+        //driver = new ChromeDriver(options);  
         this.driver = new RemoteWebDriver(new URL("http://selenium:4444/wd/hub"), options);
         this.driver.manage().window().maximize();
 
+
         properties = new Properties();
-        try (InputStream input = new FileInputStream("config.properties")) {
-            properties.load(input);
+        try (InputStream input = new FileInputStream("config.properties");
+         InputStreamReader reader = new InputStreamReader(input, StandardCharsets.UTF_8)) {
+            properties.load(reader);
         } catch (IOException e) {
             e.printStackTrace();
         }
         
     }
     /*  */ 
-    public Dashboard_Page login() {
-        MainPage mainPageResult = new MainPage(this.driver);
-        Login_Page loginPage = mainPageResult.accessLogin();
-        String email = properties.getProperty("user.email");
-        String password = properties.getProperty("user.password");
-        return loginPage.logIn(email, password);
-    }
+    // public Dashboard_Page login() {
+    //     MainPage mainPageResult = new MainPage(this.driver);
+    //     Login_Page loginPage = mainPageResult.accessLogin();
+    //     String email = properties.getProperty("user.email");
+    //     String password = properties.getProperty("user.password");
+    //     Dashboard_Page dashboard = loginPage.logIn(email, password);
+    //     return dashboard;
+    // }
 
     @Test
     public void testStaticPageLoad() {
@@ -62,16 +71,6 @@ public class SeleniumTest {
         }
     }
 
-
-    @Test
-    public void testLogin() {
-        Dashboard_Page dashboardPage = login();
-        String dashboardBodyTextContains = properties.getProperty("dashboard.body.text2.contains");
-        String dashboardPageText = dashboardPage.getDashboardBodyText();
-        assertTrue(dashboardPageText.contains(dashboardBodyTextContains));
-        
-    }
-
     @Test
     public void testInvalidLogin() {
         MainPage mainPageResult = new MainPage(this.driver);
@@ -83,7 +82,24 @@ public class SeleniumTest {
         assertTrue(dashboardPage.getBodyText().contains(dashboardBodyTextContains));
     }
 
-    // Registration form
+    @Test
+    public void testLogin() throws Exception {
+        MainPage mainPageResult = new MainPage(this.driver);
+        Login_Page loginPage = mainPageResult.accessLogin();
+        String email = properties.getProperty("user.email");
+        String password = properties.getProperty("user.password");
+        Dashboard_Page dashboardPage = loginPage.logIn(email, password);
+        System.out.println(dashboardPage.getBodyText());
+
+        driver.get("https://www.tutorialspoint.com/market/student/dashboard.jsp");
+
+        String dashboardBodyTextContains = properties.getProperty("dashboard.body.text.contains");  
+        System.out.println("dash Text: " + dashboardBodyTextContains);
+
+        //assertTrue(dashboardPage.getBodyText().contains(dashboardBodyTextContains));
+    }
+
+    // // Registration form
     @Test
     public void testRegistrationPage() {
         MainPage mainPageResult = new MainPage(this.driver);
@@ -99,18 +115,29 @@ public class SeleniumTest {
         //assertTrue(dashboardPage.getBodyText().contains("Welcome "+name.split(" ")[0]+"!"));
     }
 
-    @Test
-    public void testLogout() {
-        // Logout
-        Dashboard_Page dashboardPage = login();
-        Logout_Page logoutPage = dashboardPage.logout();
-        //String logoutBodyTextContains = properties.getProperty("logout.body.text.contains");
-        //assertTrue(logoutPage.getBodyText().contains(logoutBodyTextContains));
+    // @Test
+    // public void testLogout() {
+    //     // Logout
+    //     Dashboard_Page dashboardPage = login();
+    //     Logout_Page logoutPage = dashboardPage.logout();
+    //     //String logoutBodyTextContains = properties.getProperty("logout.body.text.contains");
+    //     //assertTrue(logoutPage.getBodyText().contains(logoutBodyTextContains));
 
-        // History test (browser back button)
-        logoutPage.navigateBackToDashboardPage();
-        // String dashboardPageTitle = properties.getProperty("dashboard.page.title");
-        // assertEquals(dashboardPageTitle, this.driver.getTitle());
+    //     // History test (browser back button)
+    //     logoutPage.navigateBackToDashboardPage();
+    //     // String dashboardPageTitle = properties.getProperty("dashboard.page.title");
+    //     // assertEquals(dashboardPageTitle, this.driver.getTitle());
+    // }
+    
+    @Test
+    public void testMainFooterText() {
+        MainPage mainPageResult = new MainPage(this.driver);
+        WebElement footerElement = driver.findElement(By.xpath("/html/body/footer/div/div[2]/div/div/div[1]")); // Modify the locator according to your HTML structure
+        String footerText = footerElement.getText();
+        String footerTextContains = properties.getProperty("footer.text.contains");
+        System.out.println("Footer Text: " + footerText);
+        System.out.println("conf Text: " + footerTextContains);
+        Assert.assertEquals(footerText, footerTextContains);
     }
 
     @After

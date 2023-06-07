@@ -22,20 +22,18 @@ import java.util.Properties;
 
 class MainPage extends PageBase {
 
-      private By footerBy = By.xpath("/html/body/footer/div/div[2]/div/div/div[1][contains(text(), 'Copyrights')]");
+      private By footerBy = By.xpath("/html/body/footer/div/div[2]/div/div/div[1]");
 
-     //private By footerBy = By.xpath("//a[contains(text(), 'Copyrights')]");
      private By accessLoginBy = By.xpath("/html/body/header/nav/div/div[2]/a");
- 
-     private By subMenuContainerBy = By.xpath("//div[@class='text-primary-hover' and contains(text(), 'Copyrights')]");
- 
-     private By requestDemoLocator = By.xpath("(//a[@href='/request-demo/'])[1]");
+
      private By signUpLocator = By.xpath("(//a[@href='/get-started/'])[2]");
  
     
     public MainPage(WebDriver driver ) {
         super(driver);
         this.driver.get("https://www.tutorialspoint.com/");
+        String title = driver.getTitle();
+        System.out.println("Page title: " + title);
     }    
 
     public Login_Page accessLogin() {
@@ -43,9 +41,8 @@ class MainPage extends PageBase {
         return new Login_Page(this.driver);
     }
 
-    // public String getFooterText() {
-    //     return this.waitAndReturnElement(footerBy).getText();
-    // }
- 
+    public String getFooterText() {
+        return this.waitAndReturnElement(footerBy).getText();
+    }
 
 }

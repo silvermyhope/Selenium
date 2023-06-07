@@ -5,14 +5,16 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import javax.mail.*;
+import javax.mail.internet.MimeMultipart;
 import javax.mail.search.FlagTerm;
+import javax.mail.search.SubjectTerm;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class Registration_Page extends PageBase{
+public class Registration_Page extends PageBase {
 
-    //private By nameLocator = By.xpath("//input[@aria-label='First & Last name']");
     private By nameLocator = By.xpath("//*[@id='textRegName']");
-
     private By countryCodeLocator = By.xpath("//*[@id='country_code']");
     private By phonenumberLocator = By.xpath("//*[@id='phone']");
     private By numVerificationButtonLocator = By.xpath("//*[@id='validate_mobile_number']");
@@ -21,7 +23,6 @@ public class Registration_Page extends PageBase{
     private By emailLocator = By.xpath("//*[@id='textSRegEmail']");
     private By verifyEmailButtonLocator = By.xpath("//*[@id='validate_email_id']");
     private By emailVerifiedLocator = By.xpath("//*[@id='verified_email']");
-
 
     private By otpLocator = By.xpath("//*[@id='txtValidateMobileOTP']");
     private By verifyOTBButtonLocator = By.xpath("//*[@id='validateMobileOtp']");
@@ -39,99 +40,77 @@ public class Registration_Page extends PageBase{
         this.waitAndReturnElement(phonenumberLocator).sendKeys(phonenumber);
 
         // Select the country code option
-        WebElement countryCodeElement = this.waitAndReturnElement(countryCodeLocator);
-        Select countryCodeSelect = new Select(countryCodeElement);
+        Select countryCodeSelect = new Select(this.waitAndReturnElement(countryCodeLocator));
         countryCodeSelect.selectByValue(countryCode);
-
 
         WebDriverWait wait = new WebDriverWait(driver, 5);
         wait.until(ExpectedConditions.visibilityOfElementLocated(verifyEmailButtonLocator)).click();
 
         // Handle email verification using OTP
-        String otp = retrieveOTPFromEmail();  // Implement the logic to retrieve OTP from email
+        String otp = retrieveOTPFromEmail(email);  // Retrieve OTP from email
         this.waitAndReturnElement(otpLocator).sendKeys(otp);
         this.waitAndReturnElement(verifyOTBButtonLocator).click();
 
-        // Go back to the registration page to confirm verification
-        driver.navigate().back();
+        try {
+            Thread.sleep(5000); // Delay for 5 seconds (5000 milliseconds)
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // Click createAccountLocator
+        this.waitAndReturnElement(createAccountLocator).click();
 
         return new On_Boarding_Page(this.driver);
     }
 
-
-    private String retrieveOTPFromEmail() {
+    private String retrieveOTPFromEmail(String email) {
+        String otp = null;
         String host = "imap.gmail.com";
-        String username = "ritakonjo1618@gmail.com"; // Replace with your Gmail address
-        String password = "Silver@16"; // Replace with your Gmail password
-    
+        String username = "ritakonjo1618@gmail.com";
+        String password = "Silver@16";
+        String folderName = "inbox";
+
         try {
             Properties properties = new Properties();
-            properties.setProperty("mail.store.protocol", "imaps");
-            Session session = Session.getInstance(properties);
-    
-            // Connect to the Gmail IMAP server
+            properties.put("mail.store.protocol", "imaps");
+            properties.put("mail.imap.host", host);
+            properties.put("mail.imap.port", "993");
+
+            Session session = Session.getInstance(properties, null);
             Store store = session.getStore("imaps");
             store.connect(host, username, password);
-    
-            // Open the inbox folder
-            Folder inbox = store.getFolder("INBOX");
-            inbox.open(Folder.READ_WRITE);
-    
-            // Search for the verification email using the subject or other criteria
-            Message[] messages = inbox.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false));
-            for (Message message : messages) {
-                String subject = message.getSubject();
-                if (subject != null && subject.equals("Signup One Time Password (OTP)")) {
-                    // Extract the OTP from the email content
-                    String otp = extractOTPFromEmailContent(message);
-                    // Mark the email as read
-                    message.setFlag(Flags.Flag.SEEN, true);
-                    // Close the inbox folder and disconnect from the server
-                    inbox.close(true);
-                    store.close();
-                    // Return the retrieved OTP
-                    return otp;
-                }
+
+            Folder folder = store.getFolder(folderName);
+            folder.open(Folder.READ_WRITE);
+
+            Message[] messages = folder.search(new SubjectTerm("Your OTP"));
+            if (messages.length > 0) {
+                Message message = messages[messages.length - 1];
+                Multipart multipart = (Multipart) message.getContent();
+                BodyPart bodyPart = multipart.getBodyPart(0);
+                String text = (String) bodyPart.getContent();
+                otp = extractOTPFromEmailText(text);
             }
-    
-            // If no verification email found or OTP not extracted, handle accordingly
-            // Close the inbox folder and disconnect from the server
-            inbox.close(true);
+
+            folder.close(true);
             store.close();
-    
         } catch (Exception e) {
             e.printStackTrace();
         }
-    
-        // Return null or handle error case
-        return null;
-    }
-
-    private String extractOTPFromEmailContent(Message message) {
-        String emailContent = "";
-        try {
-            Object content = message.getContent();
-            if (content instanceof String) {
-                emailContent = (String) content;
-            } else if (content instanceof Multipart) {
-                Multipart multipart = (Multipart) content;
-                for (int i = 0; i < multipart.getCount(); i++) {
-                    BodyPart bodyPart = multipart.getBodyPart(i);
-                    if (bodyPart.isMimeType("text/plain")) {
-                        emailContent = (String) bodyPart.getContent();
-                        break;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // Extract the OTP using custom logic based on the email content
-        // Replace the pattern with the actual pattern you expect in the email
-        String otp = emailContent.replaceAll("[^\\d]", "");
 
         return otp;
     }
 
+
+    private String extractOTPFromEmailText(String emailText) {
+        // Extract OTP from email text using regular expressions or string manipulation
+        // Modify this method based on the actual email content format
+        // Search for the OTP pattern in the email text
+        Pattern otpPattern = Pattern.compile("One Time Password \\(OTP\\)\\s*Dear Guest,\\s*Please use the following One Time Password \\(OTP\\) to Signup with Tutorialspoint.\\s*(\\w+)");
+        Matcher matcher = otpPattern.matcher(emailText);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
+        }
 }

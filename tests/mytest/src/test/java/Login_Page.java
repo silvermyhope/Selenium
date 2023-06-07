@@ -14,22 +14,16 @@ import org.openqa.selenium.NoSuchElementException;
 public class Login_Page extends PageBase {
 
     private By loginBy = By.xpath("//*[@id='navbarCollapse']/div[2]/div/a");
-    //private By usernameFieldLocator = By.xpath("//input[@name='username']");
     private By usernameFieldLocator = By.xpath("//*[@id='user_email']");
-    //private By passwordFieldLocator = By.xpath("//input[@name='password']");
     private By passwordFieldLocator = By.xpath("//*[@id='user_password']");
-    //private By clickLocator = By.xpath("//div[@class='checkbox-wrap']");
     private By clickLocator = By.xpath("//*[@id='remember_me']");
-    //private By loginButtonLocator = By.xpath("//span[@class='ui-text' and contains(text(), 'Log In')]");
-    private By loginButtonLocator = By.xpath("//*[@id='user_login']");
+    private By loginButtonLocator = By.xpath("//*[@id='user_login' and not(@disabled)]");
 
-    //private By signupLocator = By.xpath("//a[@data-url='/signup']");
     private By createAccountLocator = By.xpath("//a[@href='signup.jsp']");
 
 
     public Login_Page(WebDriver driver) {
         super(driver);
-        this.driver.get("https://www.tutorialspoint.com/market/login.asp");
     }
 
     public Dashboard_Page login() {
@@ -42,15 +36,18 @@ public class Login_Page extends PageBase {
         this.waitAndReturnElement(clickLocator).click();
         this.waitAndReturnElement(loginButtonLocator).click();
 
+        try {
+            Thread.sleep(10000); // Wait for 5 seconds
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         String dashboardPageUrl = driver.getCurrentUrl();
         System.out.println(dashboardPageUrl);
-    
         return new Dashboard_Page(this.driver);
         
     }
 
     public Registration_Page createAccount() {
-       // this.waitAndReturnElement(signupLocator).click();
         this.waitAndReturnElement(createAccountLocator).click();
         return new Registration_Page(this.driver);
     }

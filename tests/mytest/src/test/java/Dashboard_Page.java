@@ -15,6 +15,7 @@ public class Dashboard_Page extends PageBase {
     public Dashboard_Page(WebDriver driver) {
         super(driver);
         this.driver.get("https://www.tutorialspoint.com/market/student/dashboard.jsp");
+        System.out.println(driver.getCurrentUrl());
     }
 
     public String getDashboardBodyText() {
